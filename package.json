@@ -1,7 +1,7 @@
 {
     "name": "web3-core-subscriptions",
     "namespace": "ethereum",
-    "version": "1.0.0-beta.27",
+    "version": "1.0.0-beta.36",
     "description": "Manages web3 subscriptions. This is an internal package.",
     "repository": "https://github.com/ethereum/web3.js/tree/master/packages/web3-core-subscriptions",
     "license": "LGPL-3.0",
@@ -9,6 +9,6 @@
     "dependencies": {
         "eventemitter3": "1.1.1",
         "underscore": "1.8.3",
-        "web3-core-helpers": "git+https://github.com/lemengbin/web3-core-helpers.git#a040bc6f76f7e0ca3f49efafd3b4d538e8732136"
+        "web3-core-helpers": "git+https://github.com/lemengbin/web3-core-helpers.git#1414c9217f7ebd52940b051ed59b96eff96a9d49"
     }
 }

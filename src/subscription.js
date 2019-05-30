@@ -26,12 +26,11 @@ var _ = require('underscore');
 var errors = require('web3-core-helpers').errors;
 var EventEmitter = require('eventemitter3');
 
-
 function Subscription(options) {
     EventEmitter.call(this);
 
     this.id = null;
-    this.callback = null;
+    this.callback = _.identity;
     this.arguments = null;
     this._reconnectIntervalId = null;
 
@@ -132,7 +131,7 @@ Subscription.prototype._formatOutput = function (result) {
  */
 Subscription.prototype._toPayload = function (args) {
     var params = [];
-    this.callback = this._extractCallback(args);
+    this.callback = this._extractCallback(args) || _.identity;
 
     if (!this.subscriptionMethod) {
         this.subscriptionMethod = args.shift();
@@ -254,20 +253,23 @@ Subscription.prototype.subscribe = function() {
             // call callback on notifications
             _this.options.requestManager.addSubscription(_this.id, payload.params[0] , _this.options.type, function(err, result) {
 
-                // TODO remove once its fixed in geth
-                if(_.isArray(result))
-                    result = result[0];
-
-                var output = _this._formatOutput(result);
-
                 if (!err) {
-
-                    if(_.isFunction(_this.options.subscription.subscriptionHandler)) {
-                        return _this.options.subscription.subscriptionHandler.call(_this, output);
-                    } else {
-                        _this.emit('data', output);
+                    if (!_.isArray(result)) {
+                        result = [result];
                     }
 
+                    result.forEach(function(resultItem) {
+                        var output = _this._formatOutput(resultItem);
+
+                        if (_.isFunction(_this.options.subscription.subscriptionHandler)) {
+                            return _this.options.subscription.subscriptionHandler.call(_this, output);
+                        } else {
+                            _this.emit('data', output);
+                        }
+
+                        // call the callback, last so that unsubscribe there won't affect the emit above
+                        _this.callback(null, output, _this);
+                    });
                 } else {
                     // unsubscribe, but keep listeners
                     _this.options.requestManager.removeSubscription(_this.id);
@@ -276,7 +278,9 @@ Subscription.prototype.subscribe = function() {
                     if(_this.options.requestManager.provider.once) {
                         _this._reconnectIntervalId = setInterval(function () {
                             // TODO check if that makes sense!
-                            _this.options.requestManager.provider.reconnect();
+                            if (_this.options.requestManager.provider.reconnect) {
+                                _this.options.requestManager.provider.reconnect();
+                            }
                         }, 500);
 
                         _this.options.requestManager.provider.once('connect', function () {
@@ -285,16 +289,14 @@ Subscription.prototype.subscribe = function() {
                         });
                     }
                     _this.emit('error', err);
-                }
 
-                // call the callback, last so that unsubscribe there won't affect the emit above
-                if (_.isFunction(_this.callback)) {
-                    _this.callback(err, output, _this);
+                     // call the callback, last so that unsubscribe there won't affect the emit above
+                    _this.callback(err, null, _this);
                 }
             });
-        } else if (_.isFunction(_this.callback)) {
-            _this.callback(err, null, _this);
-            _this.emit('error', err);
+        } else {
+          _this.callback(err, null, _this);
+          _this.emit('error', err);
         }
     });
 
