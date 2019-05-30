@@ -9,6 +9,6 @@
     "dependencies": {
         "eventemitter3": "1.1.1",
         "underscore": "1.8.3",
-        "web3-core-helpers": "1.0.0-beta.27"
+        "web3-core-helpers": "git+https://github.com/lemengbin/web3-core-helpers.git#a040bc6f76f7e0ca3f49efafd3b4d538e8732136"
     }
 }
